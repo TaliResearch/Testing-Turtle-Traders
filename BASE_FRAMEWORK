@@ -1,0 +1,103 @@
+""" The Turtle Trading Experiment was a famous trading experiment conducted by Richard Dennis and William Eckhardt in the 1980s. 
+The experiment involved training individuals, known as "Turtles," in a systematic trend-following trading strategy.
+
+Below is a simple Python code using the pandas library to replicate a basic version of the Turtle Trading Experiment. 
+This code uses historical price data and generates buy/sell signals based on moving averages.
+
+This is a simple starting framework from which to build into more complex testing avenues. 
+
+The Turtle Trading experiment was seen as a tremendous success.
+Market conditions are always changing, and we might reasonably question if this style of trading
+could survive in today's markets.
+
+
+The Trading Signal - The Turtle Trading system is one of the most famous trend-following strategies and is
+based on purchasing a stock or contract during a breakout and quickly selling on a retracement or price fall.
+
+"""
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Function to generate trading signals
+def generate_signals(data, short_window, long_window):
+    signals = pd.DataFrame(index=data.index)
+    signals['signal'] = 0.0
+    
+    # Create short simple moving average
+    signals['short_mavg'] = data['Close'].rolling(window=short_window, min_periods=1, center=False).mean()
+
+    # Create long simple moving average
+    signals['long_mavg'] = data['Close'].rolling(window=long_window, min_periods=1, center=False).mean()
+
+    # Create signals
+    signals['signal'][short_window:] = np.where(signals['short_mavg'][short_window:] > signals['long_mavg'][short_window:], 1.0, 0.0)   
+    
+    # Generate trading orders
+    signals['positions'] = signals['signal'].diff()
+
+    return signals
+
+# Function to backtest the trading strategy
+def backtest_strategy(data, signals):
+    initial_capital = 100000.0
+    positions = pd.DataFrame(index=signals.index).fillna(0.0)
+    positions['position'] = 1000 * signals['signal']   # Buy 1000 shares on a signal
+    
+    # Initialize the portfolio with value owned   
+    portfolio = positions.multiply(data['Close'], axis=0)
+    
+    # Store the difference in shares owned 
+    pos_diff = positions.diff()
+    
+    # Add 'holdings' to portfolio
+    portfolio['holdings'] = (positions.multiply(data['Close'], axis=0)).sum(axis=1)
+    
+    # Add 'cash' to portfolio
+    portfolio['cash'] = initial_capital - (pos_diff.multiply(data['Close'], axis=0)).sum(axis=1).cumsum()   
+    
+    # Add 'total' to portfolio
+    portfolio['total'] = portfolio['cash'] + portfolio['holdings']
+    
+    # Add 'returns' to portfolio
+    portfolio['returns'] = portfolio['total'].pct_change()
+    
+    return portfolio
+
+# Function to plot the results
+def plot_results(data, short_window, long_window):
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+
+    # Plotting closing prices
+    ax1.plot(data['Close'], label='Price')
+    ax1.plot(data['short_mavg'], label=f'{short_window} days Short MA')
+    ax1.plot(data['long_mavg'], label=f'{long_window} days Long MA')
+
+    ax1.set_ylabel('Price')
+    ax1.legend()
+
+    # Plotting the trading signals
+    ax2.plot(data['signal'], marker='o', linestyle='', markersize=5, color='r', label='Buy Signal')
+    ax2.plot(data['signal'][data['positions'] == -1.0], marker='o', linestyle='', markersize=5, color='g', label='Sell Signal')
+
+    ax2.set_ylabel('Signals')
+    ax2.legend()
+
+    plt.show()
+
+# Load historical price data (replace 'your_data.csv' with your actual data file)
+data = pd.read_csv('your_data.csv', index_col='Date', parse_dates=True)
+
+# Define parameters
+short_window = 40
+long_window = 100
+
+# Generate trading signals
+signals = generate_signals(data, short_window, long_window)
+
+# Backtest the strategy
+portfolio = backtest_strategy(data, signals)
+
+# Plot the results
+plot_results(data, short_window, long_window)
