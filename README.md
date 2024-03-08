@@ -18,5 +18,5 @@ risk management, and following a well-defined trading strategy in the world of t
 This is a captivating account of an experiment in trading system success, implementation 
 and optimising (or perhaps more accurately minimising) human intervention.
 
-I want to see what happens when I code up the system and test it over a range of time periods and investment spaces
-- to uncover what we can learn from this in building future strategies and teams for quant trading strategy development.
+I want to see what happens when I code up the system and test it over a range of time periods and investment spaces, 
+to uncover what we can learn from this in building future strategies and teams for quant trading strategy development.
